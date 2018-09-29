@@ -8,7 +8,7 @@ class Task():
         """Initialize a Task object.
         Params
         ======
-            init_pose: initial position of the quadcopter in (x,y,z) dimensions and the Euler angles
+            init_pose: initial position of the quadcopter in (x,y,z) dimensions and the Euler angles() phi theta Psi
             init_velocities: initial velocity of the quadcopter in (x,y,z) dimensions
             init_angle_velocities: initial radians/second for each of the three Euler angles
             runtime: time limit for each episode
@@ -19,8 +19,10 @@ class Task():
         self.action_repeat = 3
 
         self.state_size = self.action_repeat * 6
-        self.action_low = 0
-        self.action_high = 900
+        #self.action_low = 0
+        self.action_low = 10
+        #self.action_high = 900
+        self.action_high = 500
         self.action_size = 4
 
         # Goal
@@ -28,7 +30,18 @@ class Task():
 
     def get_reward(self):
         """Uses current pose of sim to return reward."""
-        reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum()
+        # original
+        #reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum()
+        #reward = 1.-.0001*(abs(self.sim.pose[:3] - self.target_pos)).sum()  
+        
+        #x_reward = 1 - .01*(abs(self.sim.pose[0] - self.target_pos[0]))
+        #y_reward = 1 - .01*(abs(self.sim.pose[1] - self.target_pos[1]))
+        #z_reward = 10 - .01*(abs(self.sim.pose[2] - self.target_pos[2]))
+        #reward = (x_reward+ y_reward+ z_reward)
+        #reward = np.tanh(1 - 0.001*(abs(self.sim.pose[:3] - self.target_pos)).sum())
+        reward = np.tanh(1 - 0.0005*(abs(self.sim.pose[:3] - self.target_pos)).sum())
+        
+        
         return reward
 
     def step(self, rotor_speeds):
@@ -40,10 +53,13 @@ class Task():
             reward += self.get_reward() 
             pose_all.append(self.sim.pose)
         next_state = np.concatenate(pose_all)
+        #print("printing each next-S {}, R {}, and doen{}".format(next_state, reward, done) )# nxs added
         return next_state, reward, done
 
     def reset(self):
         """Reset the sim to start a new episode."""
         self.sim.reset()
-        state = np.concatenate([self.sim.pose] * self.action_repeat) 
+        state = np.concatenate([self.sim.pose] * self.action_repeat)
+        #state = np.concatenate( [np.append(self.sim.pose, self.sim.v) ]* self.action_repeat)
+        #print("task.reset() -> {}".format(state.size))
         return state
